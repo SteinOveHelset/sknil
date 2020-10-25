@@ -1,0 +1,68 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container" id="edit-category">
+    <h1 class="title">Edit category - {{ category.title }}</h1>
+
+    <article class="message is-danger" v-if="errors.length">
+        <div class="message-body">
+            The title field is missing!
+        </div>
+    </article>
+    
+    <form method="post" action="." v-on:submit="submitForm" novalidate>
+        {% csrf_token %}
+
+        <div class="field">
+            <label class="label">{{ form.title.label_tag }}</label>
+
+            <div class="control">
+                {{ form.title }}
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="label">{{ form.description.label_tag }}</label>
+
+            <div class="control">
+                {{ form.description }}
+            </div>
+        </div>
+
+        <div class="field is-grouped">
+            <div class="control">
+                <button type="submit" class="button is-primary">Save changes</button>
+                <a href="{% url 'categories' %}" class="button is-danger">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript">
+        new Vue({
+            el: '#edit-category',
+            delimiters: ['[[', ']]'],
+            data () {
+                return {
+                    title: "{{ form.title.value }}",
+                    errors: []
+                }
+            },
+            methods: {
+                submitForm: function(e) {
+                    this.errors = []
+
+                    if (!this.title.length) {
+                        e.preventDefault()
+
+                        this.errors = ['notitle']
+
+                        return false
+                    }
+                }
+            }
+        })
+    </script>
+{% endblock %}

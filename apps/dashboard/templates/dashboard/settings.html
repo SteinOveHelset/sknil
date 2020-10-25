@@ -1,0 +1,65 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="columns is-multiline">
+        <div class="column is-12">
+            <h1 class="title">Settings</h1>
+        </div>
+
+        {% if not request.user.userprofile.isPro == 'active' %}
+            <div class="column is-12">
+                <a href="{% url 'plans' %}" class="button is-primary">Plans</a>
+            </div>
+        {% endif %}
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <article class="message is-{{ message.tags }}">
+                <div class="message-body">
+                    {{ message }}
+                </div>
+            </article>
+        {% endfor %}
+    {% endif %}
+
+    <div class="columns is-multiline">
+        <div class="column is-12">
+            <form method="post" action="{% url 'settings' %}">
+                {% csrf_token %}
+
+                <div class="field">
+                    <label class="label">First name</label>
+
+                    <div class="control">
+                        <input type="text" class="input" name="first_name" value="{{ request.user.first_name }}">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Last name</label>
+                    
+                    <div class="control">
+                        <input type="text" class="input" name="last_name" value="{{ request.user.last_name }}">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">E-mail</label>
+                    
+                    <div class="control">
+                        <input type="email" class="input" name="username" value="{{ request.user.username }}">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="control">
+                        <button class="button is-success">Save changes</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

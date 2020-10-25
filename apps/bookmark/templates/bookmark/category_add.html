@@ -1,0 +1,76 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container" id="add-category">
+    <h1 class="title">Add category</h1>
+
+    {% if canAdd|length == 0 %}
+        <article class="message is-danger" v-if="errors.length">
+            <div class="message-body">
+                The title field is missing!
+            </div>
+        </article>
+        
+        <form method="post" action="." v-on:submit="submitForm" novalidate>
+            {% csrf_token %}
+
+            <div class="field">
+                <label class="label">{{ form.title.label_tag }}</label>
+
+                <div class="control">
+                    {{ form.title }}
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="label">{{ form.description.label_tag }}</label>
+
+                <div class="control">
+                    {{ form.description }}
+                </div>
+            </div>
+
+            <div class="field is-grouped">
+                <div class="control">
+                    <button type="submit" class="button is-primary">Submit</button>
+                    <a href="{% url 'categories' %}" class="button is-danger">Cancel</a>
+                </div>
+            </div>
+        </form>
+    {% else %}
+        <article class="message is-danger">
+            <div class="message-body">
+                {{ canAdd }}
+            </div>
+        </article>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript">
+        new Vue({
+            el: '#add-category',
+            delimiters: ['[[', ']]'],
+            data () {
+                return {
+                    title: '',
+                    errors: []
+                }
+            },
+            methods: {
+                submitForm: function(e) {
+                    this.errors = []
+
+                    if (!this.title.length) {
+                        e.preventDefault()
+
+                        this.errors = ['notitle']
+
+                        return false
+                    }
+                }
+            }
+        })
+    </script>
+{% endblock %}

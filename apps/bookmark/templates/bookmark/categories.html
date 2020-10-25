@@ -1,0 +1,50 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="columns is-multiline">
+        <div class="column is-12">
+            <h1 class="title">Categories</h1>
+        </div>
+
+        <div class="column is-12">
+            <a href="{% url 'category_add' %}" class="button is-primary">Add category</a>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <article class="message is-{{ message.tags }}">
+                <div class="message-body">
+                    {{ message }}
+                </div>
+            </article>
+        {% endfor %}
+    {% endif %}
+
+    <div class="columns is-multiline">
+        {% for category in categories %}
+            <div class="column is-3">
+                <div class="card card-link">
+                    <div class="card-content">
+                        <div class="media">
+                            <div class="media-content">
+                                <p class="title is-4">{{ category.title }}</p>
+                            </div>
+                        </div>
+
+                        <div class="content">
+                            {{ category.description }}
+                        </div>
+                    </div>
+
+                    <footer class="card-footer">
+                        <a href="{% url 'category' category.id %}" class="card-footer-item">View</a>
+                        <a href="{% url 'category_edit' category.id %}" class="card-footer-item">Edit</a>
+                    </footer>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,163 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container" id="delete-category">
+    <div class="columns is-multiline">
+        <div class="column is-12">
+            <h1 class="title">{{ category.title }}</h1>
+            <h2 class="subtitle">{{ category.bookmarks.all|length }} bookmark{{ category.bookmarks.all|length|pluralize:"s" }}</h2>
+        </div>
+
+        <div class="column is-12">
+            <p>{{ category.description }}</p>
+        </div>
+
+        <div class="column is-12">
+            <a class="button is-primary" href="{% url 'bookmark_add' category.id %}">Add link</a>
+            <a class="button is-warning" href="{% url 'category_edit' category.id %}">Edit</a>
+            <a class="button is-danger" @click="toggleDialog({{ category.id }})">Delete</a>
+        </div>
+    </div>
+
+    <div class="columns is-multiline">
+        <div class="column is-3" 
+            v-for="bookmark in bookmarks"
+            v-bind:key="bookmark.id"
+        >
+            <div class="card card-link">
+                <div class="card-content">
+                    <div class="media">
+                        <div class="media-content">
+                            <p class="title is-4">[[ bookmark.title ]]</p>
+                        </div>
+                    </div>
+
+                    <div class="content">
+                        [[ bookmark.description ]]<br>
+                        <b>Visits: </b>[[ bookmark.visits ]]
+                    </div>
+                </div>
+
+                <footer class="card-footer">
+                    <a :href="bookmark.url" @click="increaseVisits(bookmark.id)" class="card-footer-item" target="_blank">Visit</a>
+                    <a :href="bookmark.editurl" class="card-footer-item">Edit</a>
+                    <a class="card-footer-item" @click="toggleBookmarkDialog(bookmark.id)">Delete</a>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" v-bind:class="{ 'is-active': showDialog }">
+        <div class="modal-background"></div>
+
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Are you sure?</p>
+                <button class="delete" aria-label="close" @click="showDialog = !showDialog"></button>
+            </header>
+
+            <section class="modal-card-body">
+                If you delete this category, all bookmarks belonging to it will be deleted as well!
+            </section>
+
+            <footer class="modal-card-foot">
+                <button class="button is-success" @click="deleteCategory()">Yes, delete</button>
+                <button class="button" @click="showDialog = !showDialog">Cancel</button>
+            </footer>
+        </div>
+    </div>
+
+    <div class="modal" v-bind:class="{ 'is-active': showBookmarkDialog }">
+        <div class="modal-background"></div>
+
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Are you sure?</p>
+                <button class="delete" aria-label="close" @click="showBookmarkDialog = !showBookmarkDialog"></button>
+            </header>
+
+            <section class="modal-card-body">
+                Are you sure you want to delete the bookmark?
+            </section>
+
+            <footer class="modal-card-foot">
+                <button class="button is-success" @click="deleteBookmark()">Yes, delete</button>
+                <button class="button" @click="showBookmarkDialog = !showBookmarkDialog">Cancel</button>
+            </footer>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript">
+        new Vue({
+            el: '#delete-category',
+            delimiters: ['[[', ']]'],
+            data () {
+                return {
+                    showDialog: false,
+                    category_id: 0,
+                    bookmark_id: 0,
+                    showBookmarkDialog: false,
+                    bookmarks: [
+                        {{ bookmarksstring|safe }}
+                    ]
+                }
+            },
+            mounted () {
+                console.log(this.bookmarks)
+            },
+            methods: {
+                toggleDialog(id) {
+                    this.category_id = id
+                    this.showDialog = true
+                },
+                toggleBookmarkDialog(id) {
+                    this.bookmark_id = id
+                    this.showBookmarkDialog = true
+                },
+                deleteCategory() {
+                    axios.post('/app/api/delete_category/' + this.category_id + '/')
+                        .then((response) => {
+                            console.log(response)
+
+                            this.showDialog = false
+
+                            window.location.href = '/app/categories/'
+                        })
+                        .catch((function (error) {
+                            console.log(error)
+                        }))
+                },
+                deleteBookmark() {
+                    axios.post('/app/api/delete_bookmark/' + this.bookmark_id + '/')
+                        .then((response) => {
+                            console.log(response)
+
+                            this.showBookmarkDialog = false
+                            this.bookmarks = this.bookmarks.filter(bookmark => bookmark.id !== this.bookmark_id)
+                        })
+                        .catch((function (error) {
+                            console.log(error)
+                        }))
+                },
+                increaseVisits(bookmark_id) {
+                    axios.post('/app/api/increase_visits/' + bookmark_id + '/')
+                        .then((response) => {
+                            console.log(response)
+
+                            for (let i = 0; i < this.bookmarks.length; i++) {
+                                if (this.bookmarks[i].id === bookmark_id) {
+                                    this.bookmarks[i].visits = parseInt(this.bookmarks[i].visits) + 1
+                                }
+                            }
+                        })
+                        .catch((function (error) {
+                            console.log(error)
+                        }))
+                }
+            }
+        })
+    </script>
+{% endblock %}

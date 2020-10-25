@@ -1,0 +1,108 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container" id="plans">
+    <h1 class="title">Plans</h1>
+
+    {% for p in products %}
+        <h2 class="subtitle">{{ p.name }}</h2>
+
+        {% for plan in p.plan_set.all %}
+            <h3>{{ plan.human_readable_price }}</h3>
+
+            <input type="hidden" id="plan" value="{{ p.name }}"><br>
+            <input type="hidden" id="price" value="{{ plan.human_readable_price }}"><br>
+            <input type="hidden" id="priceId" value="{{ plan.id }}"><br>
+        {% endfor %}
+    {% endfor %}
+
+    <form v-on:submit.prevent="buyPro">
+        <h3 class="subtitle">Card information</h3>
+        
+        <div id="card"></div>
+
+        <hr>
+
+        <div class="field">
+            <div class="control">
+                <button class="button is-primary">Buy</button>
+            </div>
+        </div>
+    </form>
+
+    <div id="card-errors"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://js.stripe.com/v3/"></script>
+    <script type="text/javascript">
+        new Vue({
+            el: '#plans',
+            delimiters: ['[[', ']]'],
+            data () {
+                return {
+                    stripe: Stripe("pk_test_51H1EzYAXG1Cll3zzr1d6zcPexdHpcVeRtfO1HqHqEOiVBzbqW5YQVm32wFwmvv4eklY7jVqk3hPbRDxOjYopBA0K00ZzfGXgKb"),
+                    elements: '',
+                    card: '',
+                    price: ''
+                }
+            },
+            mounted() {
+                this.elements = this.stripe.elements();
+                this.card = this.elements.create('card');
+                this.card.mount("#card");
+            },
+            methods: {
+                buyPro () {
+                    let billingName = '{{ request.user.username }}';
+
+                    this.stripe
+                        .createPaymentMethod({
+                            type: 'card',
+                            card: this.card,
+                            billing_details: {
+                                name: billingName
+                            },
+                        })
+                        .then((result) => {
+                            if (result.error) {
+                                alert('Error 1');
+                            } else {
+                                const paymentParams = {
+                                    price_id: document.getElementById('priceId').value,
+                                    payment_method: result.paymentMethod.id
+                                };
+
+                                fetch('/app/create-sub/', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': '{{ csrf_token }}',
+                                    },
+                                    credentials: 'same-origin',
+                                    body: JSON.stringify(paymentParams),
+                                })
+                                .then((response) => {
+                                    if (result.error) {
+                                        alert('Error 2');
+                                        throw result;
+                                    }
+
+                                    return result;
+                                })
+                                .then((result) => {
+                                    if (result && result.status === 'active') {
+                                        window.location.href = '/app/settings/plans/complete/';
+                                    }
+                                })
+                                .catch(function (error) {
+                                    alert('Error 3');
+                                })
+                            }
+                        })
+                }
+            }
+        })
+    </script>
+{% endblock %}
